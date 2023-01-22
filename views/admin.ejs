@@ -1,0 +1,561 @@
+<nav class="navbar navbar-light sticky-top bg-light flex-md-nowrap p-0 shadow">
+  <ul class="nav nav-pills m-2" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="pill" href="#chat1">Users</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="pill" href="#users1">Pending Users</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="pill" href="#chatOptions">Settings</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/dashboard"
+        ><i class="fas fa-arrow-circle-left"></i> Back To Room</a
+      >
+    </li>
+  </ul>
+
+  <div id="pageMessages">
+  </div>
+  <form class="form-inline my-2 my-lg-0">
+    <a
+      class="btn btn-outline-success my-2 my-sm-0 mr-2"
+      type="a"
+      href="/password"
+    >
+      Change Password
+    </a>
+  </form>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <main
+      role="main"
+      class="col-md-12 mr-sm-auto col-lg-12 px-md-4 main-section"
+      style="padding-top: 7rem; overflow-y: auto;"
+    >
+      <div class="d-flex flex-column h-100 justify-content-between bg-light">
+        <div class="tab-content">
+          <div id="chatOptions" class="container tab-pane fade">
+            <div
+              class="btn-group-vertical"
+              role="group"
+              aria-label="Vertical button group"
+            >
+              <button
+                id="chat-on-off"
+                type="button"
+                class="btn btn-danger m-2"
+                disabled
+              >
+                অপেক্ষা করুন...
+              </button>
+              <button id="dw" type="button" class="btn btn-secondary m-2">
+                Download Chat
+              </button>
+              <button id="download-users" type="button" class="btn btn-secondary m-2">
+                Download Users Json
+              </button>
+              <button id="dlt" type="button" class="btn btn-danger m-2">
+                Delete Chat
+              </button>
+
+              <form class="form-inline">
+                <div class="form-group mx-sm-3 m-2">
+                  <textarea
+                    id="notice-body"
+                    class="form-control"
+                    placeholder="type here..."
+                    autofocus
+                  ></textarea>
+                </div>
+                <button
+                  type="button"
+                  id="notice-button"
+                  class="btn btn-primary mb-2"
+                >
+                  Update Notice
+                </button>
+              </form>
+
+              <button id="dlt-notice" type="button" class="btn btn-danger m-2">
+                Delete Notice
+              </button>
+            </div>
+          </div>
+          <div id="users1" class="member_list mt-4 container tab-pane fade" style="width: 100%">
+            <div id="loadpending" style="text-align: center">
+              <a href="javascript:">see more</a>
+            </div>
+  
+            <ul id="users" class="list-unstyled list-group"></ul>
+            <h2 style="display: none" id="admin-usr"><%=name %></h2>
+          </div>
+          <!--chat_area-->
+          <div id="chat1" class="chat_area container tab-pane active">
+            <div id="loaduser" style="text-align: center">
+              <a href="javascript:">see more</a>
+            </div>
+
+            <ul id="chat" class="list-unstyled list-group"></ul>
+            <div>
+              <a href="javascript:" id="jump-to-last"
+                ><i class="icon-chevron-up">&#9660;</i></a
+              >
+            </div>
+          </div>
+          <!--chat_area-->
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  $(function () {
+    var socket = io.connect();
+    var $chat = $("#chat");
+    var $chat1 = $("#chat1");
+    var $users = $("#users");
+    var $users1 = $("#users1");
+    var $user = $("#admin-usr").html();
+    var $luser = $("#loaduser");
+    var $lpending = $("#loadpending");
+    var $delete = $("#dlt");
+    var $dwn = $("#dw");
+    var $toggle = $("#chat-on-off");
+
+    socket.emit("approved");
+    socket.emit("pending");
+    socket.emit("load chat"); // chat should be enable or disable ?
+
+    setInterval(function () {
+      window.location.reload();
+    }, 900000);
+
+    // Active Response
+    // socket.on("response", () => {
+    //   let t = moment().tz("Asia/Dhaka").format("a h:mm");
+    //   socket.emit("actRes", { user: $user, time: t });
+    // });
+
+    // Logout
+    $("#button").click(function () {
+      socket.emit("lg", $user);
+      window.location.href = "/users/logout";
+    });
+
+    // Delete Notice
+    $("#dlt-notice").click(function () {
+      socket.emit("notice", "");
+      createAlert('','','Notice Deleted Successfully.','success',false,true,'pageMessages');
+    });
+
+    socket.on("registered", function (data, index) {
+      $users.append(
+        '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-4"><p class="text-primary text-center"><b>' +
+          data.name +
+          '</b></p></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="approve' +
+          index +
+          '" value="' +
+          data.name +
+          '" >Approve</button></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="disapprove' +
+          index +
+          '" value="' +
+          data.name +
+          '" >Delete</button></div> </div> </li>'
+      );
+
+      const element = document.querySelector("#jump-to-last-pending");
+      const value = element.style.display;
+
+      if (value == "" || value == "undefined" || value == "none") {
+        $users1.scrollTop($users.get(0).scrollHeight);
+      }
+    });
+
+    // Remove pending user
+    socket.on("remove pending", function (data) {
+      $("ul#users > li").each(function (index) {
+        if (
+          $(this).children().children().children().children().text() == data
+        ) {
+          $(this).fadeOut("normal", function () {
+            $(this).remove();
+          });
+        }
+      });
+    });
+
+    // Remove approved user
+    socket.on("remove approved", function (data) {
+      $("ul#chat > li").each(function (index) {
+        if (
+          $(this).children().children().children().children("b").text() == data
+        ) {
+          $(this).fadeOut("normal", function () {
+            $(this).remove();
+          });
+        }
+      });
+    });
+
+    // User role changed
+    socket.on("role changed", function (data) {
+      $("ul#chat > li").each(function (index) {
+        if (
+          $(this).children().children().children().children("b").text() ==
+          data.name
+        ) {
+          var role = "Make Admin";
+          if (data.isAdmin) {
+            role = "Make User";
+          }
+          $(this).children().children(".access-role").children().text(role); //.replaceWith(role);
+        }
+      });
+    });
+
+    // Message submission
+    $("#notice-button").click(function () {
+      msg = $("#notice-body").val();
+      if ($.trim(msg).length > 0) {
+        socket.emit("notice", msg);
+        $("#notice-body").val("");
+        createAlert('','','Notice Updated Successfully.','success',false,true,'pageMessages');
+      }
+    });
+
+    var unread = 0;
+    // New message append
+    socket.on("new message", function (data) {
+      unread++;
+      document.title = "Chat Room (" + unread + ")";
+    });
+
+    // New user approved
+    socket.on("new approved", function (data, index) {
+      $chat.append(
+        '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-2"><p class="text-info text-center"><b>' +
+          data.name +
+          '</b></p></div><div class="col-sm-4 access-role"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="change' +
+          index +
+          '" value="' +
+          data.name +
+          '" >Make Admin</button></div><div class="col-sm-2"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="delete' +
+          index +
+          '" value="' +
+          data.name +
+          '" >Delete</button></div><div class="col-sm-4"><p class="text-primary text-center"><i>Approved By ' +
+          data.approvedBy +
+          "</i></p></div> </div> </li>"
+      );
+
+      const element = document.querySelector("#jump-to-last");
+      const value = element.style.display;
+
+      if (value == "" || value == "undefined" || value == "none") {
+        $chat1.scrollTop($chat.get(0).scrollHeight);
+      }
+    });
+
+    // Load Chat Enable/Disable Button
+    socket.on("chat-toggle", function (data) {
+      if (data) {
+        $("#chat-on-off").removeClass("btn-danger");
+        $("#chat-on-off").addClass("btn-success");
+        $("#chat-on-off").text("Chat On");
+        $("#chat-on-off").prop("disabled", false);
+      } else {
+        $("#chat-on-off").removeClass("btn-success");
+        $("#chat-on-off").addClass("btn-danger");
+        $("#chat-on-off").text("Chat Off");
+        $("#chat-on-off").prop("disabled", false);
+      }
+    });
+
+    // Old approved users list
+    socket.on("approved users", function (data) {
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          var roleBtn = "Make Admin";
+          if (data[x].isAdmin) {
+            roleBtn = "Make User";
+          }
+          if (!data[x].isSuperAdmin) {
+            $chat.prepend(
+              '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-2"><p class="text-info text-center"><b>' +
+                data[x].name +
+                '</b></p></div><div class="col-sm-4 access-role"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="change' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >' +
+                roleBtn +
+                '</button></div><div class="col-sm-2"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="delete' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >Delete</button></div><div class="col-sm-4"><p class="text-info text-center"><i>Approved By <b>' +
+                data[x].approvedBy +
+                "</b></i></p></div> </div> </li>"
+            );
+          } else {
+            $chat.prepend(
+              '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-2"><p class="text-info text-center"><b>' +
+                data[x].name +
+                '</b></p></div><div class="col-sm-4 access-role"><button class="btn my-2 my-sm-0 mr-2 btn-success" disabled id="change' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >' +
+                roleBtn +
+                '</button></div><div class="col-sm-2"><button class="btn my-2 my-sm-0 mr-2 btn-danger" disabled id="delete' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >Delete</button></div><div class="col-sm-4"><p class="text-info text-center"><i>Approved By <b>' +
+                data[x].approvedBy +
+                "</b></i></p></div> </div> </li>"
+            );
+          }
+        }
+      }
+
+      $chat1.scrollTop($chat.get(0).scrollHeight);
+    });
+
+    // Old pending users list
+    socket.on("pending users", function (data) {
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          $users.prepend(
+            '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-4"><p class="text-info text-center"><b>' +
+              data[x].name +
+              '</b></p></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="approve' +
+              x +
+              '" value="' +
+              data[x].name +
+              '" >Approve</button></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="disapprove' +
+              x +
+              '" value="' +
+              data[x].name +
+              '" >Delete</button></div> </div> </li>'
+          );
+        }
+      }
+
+      $users1.scrollTop($users.get(0).scrollHeight);
+    });
+
+    // Approve
+    $users.on("click", 'button[id^="approve"]', function () {
+      var $val = $(this).attr("value");
+      socket.emit("approve now", $val, $user);
+    });
+
+    // Disapprove
+    $users.on("click", 'button[id^="disapprove"]', function () {
+      var $val = $(this).attr("value");
+      socket.emit("delete now", $val, 1);
+    });
+
+    // Delete
+    $chat.on("click", 'button[id^="delete"]', function () {
+      var $val = $(this).attr("value");
+      socket.emit("delete now", $val, 2);
+    });
+
+    // Change Role
+    $chat.on("click", 'button[id^="change"]', function () {
+      var $val = $(this).attr("value");
+      socket.emit("change role", $val);
+    });
+
+    // Chat On/Off
+    $toggle.on("click", function () {
+      socket.emit("toggle chat");
+    });
+
+    // Load more approved users prepend
+    socket.on("lm-users", function (data) {
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          var roleBtn = "Make Admin";
+          if (data[x].isAdmin) {
+            roleBtn = "Make User";
+          }
+          if (!data[x].isSuperAdmin) {
+            $chat.prepend(
+              '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-2"><p class="text-info text-center"><b>' +
+                data[x].name +
+                '</b></p></div><div class="col-sm-4 access-role"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="change' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >' +
+                roleBtn +
+                '</button></div><div class="col-sm-2"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="delete' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >Delete</button></div><div class="col-sm-4"><p class="text-info text-center"><i>Approved By <b>' +
+                data[x].approvedBy +
+                "</b></i></p></div> </div> </li>"
+            );
+          } else {
+            $chat.prepend(
+              '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-2"><p class="text-info text-center"><b>' +
+                data[x].name +
+                '</b></p></div><div class="col-sm-4 access-role"><button class="btn my-2 my-sm-0 mr-2 btn-success" disabled id="change' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >' +
+                roleBtn +
+                '</button></div><div class="col-sm-2"><button class="btn my-2 my-sm-0 mr-2 btn-danger" disabled id="delete' +
+                x +
+                '" value="' +
+                data[x].name +
+                '" >Delete</button></div><div class="col-sm-4"><p class="text-info text-center"><i>Approved By <b>' +
+                data[x].approvedBy +
+                "</b></i></p></div> </div> </li>"
+            );
+          }
+        }
+      } else {
+        $luser.hide();
+      }
+    });
+
+    // Load more pending users prepend
+    socket.on("lm-pending", function (data) {
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          $users.prepend(
+            '<li class="left clearfix list-group-item list-group-item-action list-group-item-success m-2"> <div class="row chat-body1 clearfix "> <div class="col-sm-4"><p class="text-info text-center"><b>' +
+              data[x].name +
+              '</b></p></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-success" id="approve' +
+              x +
+              '" value="' +
+              data[x].name +
+              '" >Approve</button></div><div class="col-sm-4"><button class="btn my-2 my-sm-0 mr-2 btn-danger" id="disapprove' +
+              x +
+              '" value="' +
+              data[x].name +
+              '" >Delete</button></div> </div> </li>'
+          );
+        }
+      } else {
+        $lpending.hide();
+      }
+    });
+
+    // Jump to Last msg funtionality
+    var jump_to_button = $("#jump-to-last");
+    $chat1.scroll(function () {
+      if ($chat1.scrollTop() == 0) {
+        $luser.fadeIn(200);
+      } else {
+        $luser.fadeOut(200);
+      }
+
+      var msgwind_height = $(this).height();
+      var msg_position =
+        $(this).get(0).scrollHeight -
+        $(this).scrollTop(); /* Arbitrary calculation */
+      var scroll_distance = msg_position - msgwind_height;
+      var lastmsg_height = $(this).find("li:last-child").height();
+      if (scroll_distance >= lastmsg_height) {
+        jump_to_button.fadeIn(200); // Fade in the arrow
+      } else {
+        jump_to_button.fadeOut(200); // Else fade out the arrow
+      }
+    });
+    jump_to_button.click(function () {
+      // When arrow is clicked
+      $chat1.animate(
+        {
+          scrollTop: $chat.get(0).scrollHeight, // Scroll to last msg
+        },
+        500
+      );
+    });
+
+    // Jump to Last msg funtionality
+    var jump_to_button_pending = $("#jump-to-last-pending");
+    $users1.scroll(function () {
+      if ($users1.scrollTop() == 0) {
+        $lpending.fadeIn(200);
+      } else {
+        $lpending.fadeOut(200);
+      }
+
+      var msgwind_height = $(this).height();
+      var msg_position =
+        $(this).get(0).scrollHeight -
+        $(this).scrollTop(); /* Arbitrary calculation */
+      var scroll_distance = msg_position - msgwind_height;
+      var lastmsg_height = $(this).find("li:last-child").height();
+      if (scroll_distance >= lastmsg_height) {
+        jump_to_button_pending.fadeIn(200); // Fade in the arrow
+      } else {
+        jump_to_button_pending.fadeOut(200); // Else fade out the arrow
+      }
+    });
+    jump_to_button_pending.click(function () {
+      // When arrow is clicked
+      $users1.animate(
+        {
+          scrollTop: $users.get(0).scrollHeight, // Scroll to last msg
+        },
+        500
+      );
+    });
+
+    // load more onclick
+    $luser.click(function () {
+      // load more message emit
+      var msgnow = $chat.children().length;
+      socket.emit("loaduser", msgnow);
+    });
+
+    // load more onclick
+    $lpending.click(function () {
+      // load more message emit
+      var msgnow = $users.children().length;
+      socket.emit("loadpending", msgnow);
+    });
+
+    // Delete
+    $delete.click(function () {
+      socket.emit("dlt");
+      createAlert('','','Chat Deleted Successfully.','success',false,true,'pageMessages');
+    });
+
+    // Download
+    $dwn.click(function () {
+      socket.emit("dwn");
+      window.open("/download", "_blank");
+    });
+
+    // Download
+    $("#download-users").click(function () {
+      socket.emit("Download Users");
+      window.open("/download-users", "_blank");
+    });
+    
+    $("#chatToggleSwitch").click(function () {
+      if ($("#chatToggleSwitch").is(":checked") == true) {
+        console.log("checked");
+        $("#chatToggleSwitch").prop("checked", true);
+      } else {
+        console.log("not checked");
+        $("#chatToggleSwitch").prop("checked", false);
+      }
+    });
+  });
+</script>

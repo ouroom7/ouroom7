@@ -1,0 +1,14 @@
+[
+  {
+    "isApproved": true,
+    "isAdmin": true,
+    "isSuperAdmin": true,
+    "approvedBy": "",
+    "_id": "6390490e1857c02c9ab20591",
+    "username": "client",
+    "name": "Admin",
+    "password": "$2a$10$gC2OtYeVgOcfuIl8e/JVuOcPjGlkFpeg3rhczP0LrrrrfgoXCQvTW",
+    "date": "1670400270586",
+    "sound": true
+  }
+]

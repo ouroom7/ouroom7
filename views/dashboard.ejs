@@ -1,0 +1,708 @@
+<script src="../emoji-button.js"></script>
+<div id="pageMessages"></div>
+
+<nav class="navbar navbar-light sticky-top bg-light flex-md-nowrap p-0 shadow">
+  <!-- <a class="navbar-brand bg-light col-md-3 col-lg-2 mr-0 px-3" href="/admin"
+    >এডমিন প্যানেল</a
+  > -->
+  <a
+    class="admin-panel text-center btn p-2 m-1 ml-5 col-sm-2 col-md-2 col-lg-2 text-left btn-outline-success"
+    type="button"
+    href="/admin"
+  >
+    এডমিন প্যানেল
+  </a>
+  <button
+    class="navbar-toggler position-absolute d-md-none collapsed"
+    type="button"
+    data-toggle="collapse"
+    data-target="#sidebarMenu"
+    aria-controls="sidebarMenu"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <ul class="navbar-nav px-3 noticeSection col-lg-6 col-md-4 col-sm-12">
+    <li id="noticeBoard" class="nav-item text-nowrap"></li>
+  </ul>
+  <form class="form-inline my-2 my-lg-0">
+    <i
+      aria-hidden="true"
+      class="fa fa-volume-up my-2 my-sm-0 mr-2 ml-2 sound-control"
+    ></i>
+    <a class="btn btn-outline-success my-2 my-sm-0 mr-2" href="/password">
+      চেঞ্জ পাসওয়ার্ড
+    </a>
+    <button
+      class="logout btn btn-outline-success my-2 my-sm-0 mr-2"
+      type="button"
+    >
+      লগ আউট
+    </button>
+  </form>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <main
+      role="main"
+      class="col-md-9 mr-sm-auto col-lg-10 px-md-4 main-section"
+    >
+      <div class="d-flex flex-column h-100 justify-content-between bg-light">
+        <div id="chat1" class="p-2 message-box">
+          <h2 style="display: none" id="usr"><%=name %></h2>
+          <a href="javascript:" id="jump-to-last"
+            ><i class="icon-chevron-up">&#9660;</i></a
+          >
+          <div id="loadmore" style="text-align: center">
+            <a href="javascript:">আরও দেখবো</a>
+          </div>
+          <ul id="chat" class="list-unstyled"></ul>
+        </div>
+
+        <div class="p-2">
+          <!--message_write-->
+          <div
+            id="messageForm"
+            class="message_write fixed-bottom"
+            style="position: relative"
+          >
+            <div><% include ./partials/messages %></div>
+            <button
+              id="emoji-button"
+              class="emoji-picker__emoji"
+              tabindex="0"
+              title="grinning face"
+            >
+              😀
+            </button>
+            <div id="messageBox">
+              <textarea
+                data-expandable
+                style="height: 45px; max-height: 38vh; resize: none"
+                id="message"
+                class="form-control"
+                placeholder="এখানে লিখুন..."
+                autofocus
+              ></textarea>
+            </div>
+            <div class="clearfix"></div>
+            <!--	<div class="chat_bottom "><a href="# " class="pull-left upload_btn "><i class="fa fa-cloud-upload " aria-hidden="true "></i>
+                   Add Files</a>
+                   <a href="# " class="pull-right btn btn-success ">
+                   Send</a>
+                </div>-->
+          </div>
+          <!--message_write-->
+        </div>
+      </div>
+    </main>
+    <div class="toggle">
+      <a id="sidebar-toggle" href="#" class="burger active">
+        <span></span>
+      </a>
+    </div>
+    <div class="toggle">
+      <a id="header-toggle" href="#" class="burger active">
+        <span></span>
+      </a>
+    </div>
+    <div id="sidebar_wrapper">
+      <nav
+        id="sidebarMenu"
+        class="col-md-3 col-lg-2 bg-light sidebar collapse d-md-block"
+      >
+        <div class="sidebar-sticky pt-3">
+          <div class="text-center">
+            <button
+              type="button"
+              class="btn btn-outline-warning my-2 my-sm-0 mr-2"
+              style="
+                background-color: #ffc107;
+                color: #212529;
+                border-color: #ffc107;
+              "
+            >
+              অনলাইন
+            </button>
+          </div>
+          <ul id="users" class="nav flex-column mt-3"></ul>
+        </div>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+  $("#sidebar-toggle").on("click", function () {
+    $(this).toggleClass("active");
+    if (!$(this).hasClass("active")) {
+      $("#sidebar_wrapper").hide("slow"); // hide sidebar
+      $(".main-section").removeClass("col-md-9 col-lg-10"); // remove smaller div class
+      $(".main-section").addClass("col-md-12 col-lg-12"); // add larger div class
+      return;
+    }
+
+    if ($(this).hasClass("active")) {
+      $("#sidebar_wrapper").show("slow"); // show sidebar
+      $(".main-section").removeClass("col-md-12 col-lg-12"); // remove larger div class
+      $(".main-section").addClass("col-md-9 col-lg-10"); // add smaller div class
+      return;
+    }
+  });
+  $("#header-toggle").on("click", function () {
+    $(this).toggleClass("active");
+    if (!$(this).hasClass("active")) {
+      $(".navbar").slideUp();
+      const $elem = $(".main-section");
+      $elem[0].style.setProperty("padding", "0px 24px 0px", "important");
+      $elem[0].style.setProperty("top", "0px");
+    }
+    if ($(this).hasClass("active")) {
+      $(".navbar").slideDown();
+      const $elem = $(".main-section");
+      $elem[0].style.setProperty("padding", "48px 24px 0px", "important");
+      $elem[0].style.removeProperty("top");
+    }
+  });
+
+  $("#minimize-sidebar").on("click", function () {
+    if ($("#minimize-sidebar").hasClass("fa-angle-double-right")) {
+      $("#sidebar_wrapper").hide(); // hide sidebar
+      $(".main-section").removeClass("col-md-9 col-lg-10"); // remove smaller div class
+      $(".main-section").addClass("col-md-12 col-lg-12"); // add larger div class
+
+      $("#minimize-sidebar").removeClass(
+        "right-arrow fa fa-angle-double-right"
+      ); // remove right icon
+      $("#minimize-sidebar").addClass("left-arrow fa fa-angle-double-left"); // add users icon
+      return;
+    }
+
+    if ($("#minimize-sidebar").hasClass("fa fa-angle-double-left")) {
+      $("#sidebar_wrapper").show(); // show sidebar
+      $(".main-section").removeClass("col-md-12 col-lg-12"); // remove larger div class
+      $(".main-section").addClass("col-md-9 col-lg-10"); // add smaller div class
+
+      $("#minimize-sidebar").removeClass("left-arrow fa fa-angle-double-left"); // remove users icon
+      $("#minimize-sidebar").addClass("right-arrow fa fa-angle-double-right"); // add right icon
+      return;
+    }
+  });
+</script>
+<script>
+  $("body").on("keydown input", "textarea[data-expandable]", function () {
+    //Auto-expanding textarea
+    this.style.removeProperty("height");
+    this.style.height = this.scrollHeight + 1 + "px";
+
+    /*   var heightString = $('#chat1').css("height");
+  var height = parseFloat(heightString) - 24;
+  $('#chat1').css("height", height + "px");
+ */
+  });
+</script>
+<script>
+  const button = document.querySelector("#emoji-button");
+
+  const picker = new EmojiButton({ zIndex: 100000 });
+  picker.on("emoji", (emoji) => {
+    document.querySelector("textarea#message").value += emoji;
+  });
+  button.addEventListener("click", () => {
+    picker.togglePicker(button);
+  });
+</script>
+<script>
+  $(function () {
+    var socket = io.connect();
+    var $messageForm = $("#messageForm");
+    var $message = $("#message");
+    var $chat = $("#chat");
+    var $chat1 = $("#chat1");
+    var $users = $("#users");
+    var $user = $("#usr").html();
+    var $lmore = $("#loadmore");
+    var $messageBox = $("#messageBox");
+    var $notice = $("#noticeBoard");
+    var $date = $("#date");
+    var counter = 0;
+    var history = [];
+    var index = -1;
+    var sound = true;
+    var disconnected = new Audio("/disconnected.wav");
+    var connected = new Audio("/connected.wav");
+    var notification = new Audio("/notification.wav");
+
+    socket.emit("load chat"); // chat should be enable or disable ?
+    socket.emit("get notice"); // get notice
+    socket.emit("get sound", { name: $user }); // get sound preference
+
+    // by default chat is disabled
+    $message.attr("placeholder", "চ্যাট বন্ধ আছে").val("").focus().blur();
+    $message.prop("disabled", true);
+
+    // reload after interval
+    setInterval(function () {
+      window.location.reload();
+    }, 900000);
+
+    // Delete Messages
+    socket.on("chat deleted", function () {
+      $("ul#chat > li").each(function (index) {
+        $(this).remove();
+      });
+    });
+
+    // Chat Option Toggled
+    socket.on("chat-toggle", function (data) {
+      console.log("dash");
+      //$messageBox.children().remove();
+      if (data) {
+        $message.attr("placeholder", "এখানে লিখুন...").val("").focus().blur();
+        $message.prop("disabled", false);
+        //$messageBox.append('<textarea id="message" class="form-control" placeholder="এখানে লিখুন..." autofocus></textarea>');
+      } else {
+        $message.attr("placeholder", "চ্যাট বন্ধ আছে").val("").focus().blur();
+        $message.prop("disabled", true);
+        //$messageBox.append('<textarea disabled id="message" class="form-control" placeholder="চ্যাট বন্ধ আছে" autofocus></textarea>');
+      }
+    });
+
+    // Notice Updated
+    socket.on("notice updated", function (data) {
+      if (data) {
+        $notice.children().remove();
+        $notice.append(
+          '<marquee id="notice" behavior="scroll" direction="left" style="height: 25px; color: #28a745;">নোটিসঃ ' +
+            data +
+            "</marquee>"
+        );
+      } else {
+        $notice.children().remove();
+        $notice.append(
+          '<a class="nav-link" href="#" style="color: #28a745">بسم الله الرحمن الرحيم</a>'
+        );
+      }
+    });
+
+    // sound preference
+    $(".sound-control").on("click", function () {
+      if ($(this).hasClass("fa-volume-off")) {
+        sound = true;
+        $(".sound-control").removeClass("fa fa-volume-off ");
+        $(".sound-control").addClass("fa fa-volume-up ");
+        createAlert(
+          "",
+          "",
+          "সাউন্ড চালু হয়েছে",
+          "success",
+          false,
+          true,
+          "pageMessages"
+        );
+        socket.emit("sound", { name: $user, sound: true });
+        return;
+      }
+      if ($(this).hasClass("fa-volume-up")) {
+        sound = false;
+        $(".sound-control").removeClass("fa fa-volume-up");
+        $(".sound-control").addClass("fa fa-volume-off");
+
+        createAlert(
+          "",
+          "",
+          "সাউন্ড বন্ধ হয়েছে",
+          "danger",
+          false,
+          true,
+          "pageMessages"
+        );
+
+        socket.emit("sound", { name: $user, sound: false });
+        return;
+      }
+    });
+
+    // Sound Updated
+    socket.on("sound updated", function (data) {
+      if (data) {
+        sound = true;
+        $(".sound-control").removeClass("fa fa-volume-off ");
+        $(".sound-control").addClass("fa fa-volume-up ");
+      } else {
+        sound = false;
+        $(".sound-control").removeClass("fa fa-volume-up");
+        $(".sound-control").addClass("fa fa-volume-off");
+      }
+    });
+
+    // Date Updated
+    socket.on("date updated", function (data) {
+      $date.children().remove();
+      $date.append(
+        '<p style="height: 25px; background-color: white; text-align: center" id="date">তারিখঃ ' +
+          data +
+          "</p>"
+      );
+    });
+
+    // Active users mark by adding class act
+    socket.on("actM", (data) => {
+      $("ul#users > li").each(function (index) {
+        console.log("actmark called");
+        if ($(this).text().split(" ", 1) == data) {
+          $(this).addClass("act");
+        }
+      });
+    });
+
+    // InActive users remove and Active users unmark
+    socket.on("inAct", () => {
+      $("ul#users > li").each(function (index) {
+        if (!$(this).hasClass("act")) {
+          $(this).fadeOut("normal", function () {
+            $(this).remove();
+          });
+          if (sound) {
+            disconnected.play();
+          }
+        } else {
+          $(this).removeClass("act");
+        }
+      });
+    });
+
+    // Logout
+    $(".logout").click(function () {
+      socket.emit("lg", $user);
+      window.location.href = "/users/logout";
+    });
+
+    // Remove logout user
+    socket.on("lgUser", function (data) {
+      $("ul#users > li").each(function (index) {
+        if ($(this).text().split(" ", 1) == data) {
+          $(this).fadeOut("normal", function () {
+            $(this).remove();
+          });
+          if (sound) {
+            disconnected.play();
+          }
+        }
+      });
+    });
+
+    // Append new user
+    socket.on("nUser", function (data) {
+      var nouser = true;
+      $("ul#users > li").each(function (index) {
+        if ($(this).text().split(" ", 1) == data.user) {
+          nouser = false;
+        }
+      });
+
+      if (nouser) {
+        $users
+          .append(
+            '<li class="left clearfix"><div class="header_sec"><strong class="primary-font"><mark>' +
+              data.user +
+              '</mark></strong> <i class="pull-right">' +
+              data.time +
+              "</i></div></li>"
+          )
+          .fadeIn(2000);
+        if (sound) {
+          connected.play();
+        }
+      }
+    });
+
+    // Users list append
+    socket.on("get users", function (data) {
+      $users.html("");
+      for (i = 0; i < data.length; i++) {
+        $users.append(
+          '<li class="left clearfix"><div class="header_sec"><strong class="primary-font"><mark>' +
+            data[i].username +
+            '</mark></strong> <i class="pull-right">' +
+            data[i].time +
+            "</i></div></li>"
+        );
+      }
+    });
+
+    // Message submission
+    $messageForm.keypress(function (e) {
+      if (e.which == 13 && !e.shiftKey) {
+        msg = $message.val();
+        if ($.trim(msg).length > 0) {
+          let t = moment().tz("Asia/Dhaka").format("a h:mm");
+          socket.emit("send message", {
+            user: $user,
+            msg: $.trim(msg),
+            time: t,
+          });
+          $message.val("");
+          $chat.append('<li class="pending">ম্যাসেজ পাঠানো হচ্ছে...</li>');
+          $chat1.scrollTop($chat.get(0).scrollHeight);
+          history.unshift(msg);
+          index = -1;
+        }
+      }
+    });
+
+    // Message submission
+    $messageForm.keydown(function (e) {
+      if (e.which == 90 && e.ctrlKey && e.shiftKey) {
+        if (index >= 0) {
+          index--;
+          if (index >= 0) {
+            $message.val(history[index]);
+            $message.focus();
+          } else {
+            $message.val("");
+            $message.focus();
+          }
+        }
+      } else if (e.which == 90 && e.ctrlKey) {
+        if (index < history.length) {
+          if (!(index == -1 && $message.val() != "")) {
+            index++;
+            if (index < history.length) {
+              $message.val(history[index]);
+              $message.focus();
+            } else {
+              $message.val("");
+              $message.focus();
+            }
+          }
+        }
+      } else {
+        index = -1;
+      }
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) {
+        document.title = "Chat Room";
+      }
+    });
+
+    var unread = 0;
+    // New message append
+    socket.on("new message", function (data) {
+      var delete_button = "";
+
+      if (data.user == $user) {
+        delete_button =
+          '<a id="b' +
+          counter +
+          '" message_id="' +
+          data._id +
+          '" href="javascript:"><i class="fas fa-trash"></i></a>';
+      } else {
+        if (sound) notification.play();
+      }
+
+      $("ul#chat > li.pending").remove();
+
+      data.msg = data.msg.replace(/(?:\r\n|\r|\n)/g, "<br>");
+
+      $chat.append(
+        '<li  style="padding: 0px; margin: 1px;" class="left clearfix "> <div class="chat-body1 clearfix "> <p id="' +
+          data._id +
+          '"><strong class="text-info">' +
+          data.user +
+          ": </strong>" +
+          data.msg +
+          '<i class="text-muted">' +
+          data.time +
+          ' <a id="a' +
+          counter +
+          '" title="' +
+          data.user +
+          ": " +
+          data.msg +
+          "     " +
+          data.time +
+          '" href="javascript:"><i class="fas fa-reply"></i></a> ' +
+          delete_button +
+          " </i></p> </div> </li>"
+      );
+      counter++;
+
+      const element = document.querySelector("#jump-to-last");
+      const value = element.style.display;
+
+      if (value == "" || value == "undefined" || value == "none") {
+        $chat1.scrollTop($chat.get(0).scrollHeight);
+      }
+      if (document.hidden) {
+        unread++;
+        document.title = "Chat Room(" + unread + ")";
+        if (sound) notification.play();
+      } else {
+        unread = 0;
+      }
+    });
+
+    // Old message prepend on startup
+    socket.on("output", function (data) {
+      //socket.emit('load chat');
+
+      let t = moment().tz("Asia/Dhaka").format("a h:mm");
+      socket.emit("username", { user: $user, time: t });
+
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          data[x].message = data[x].message.replace(/(?:\r\n|\r|\n)/g, "<br>");
+
+          var delete_button = "";
+
+          if (data[x].name == $user) {
+            delete_button =
+              '<a id="b' +
+              counter +
+              '" message_id="' +
+              data[x]._id +
+              '" href="javascript:"><i class="fas fa-trash"></i></a>';
+          }
+
+          var message =
+            '<li  style="padding: 0px; margin: 1px;" class="left clearfix "> <div class="chat-body1 clearfix "> <p id="' +
+            data[x]._id +
+            '"><strong class="text-info">' +
+            data[x].name +
+            ": </strong>" +
+            data[x].message +
+            '<i class="text-muted">' +
+            data[x].time +
+            ' <a id="a' +
+            counter +
+            '" title="' +
+            data[x].name +
+            ": " +
+            data[x].message +
+            "     " +
+            data[x].time +
+            '" href="javascript:"><i class="fas fa-reply"></i></a> ' +
+            delete_button +
+            " </i></p> </div> </li>";
+
+          $chat.prepend(message);
+          counter++;
+        }
+      }
+
+      $chat1.scrollTop($chat.get(0).scrollHeight);
+    });
+
+    // Delete Single Message
+    socket.on("message deleted", function (data) {
+      var id = "#" + data._id;
+      $(id).remove();
+    });
+
+    // Load more message prepend
+    socket.on("lm-meesages", function (data) {
+      if (data.length) {
+        for (var x = 0; x < data.length; x++) {
+          $chat.prepend(
+            '<li  style="padding: 0px; margin: 1px;" class="left clearfix "> <div class="chat-body1 clearfix "> <p><strong class="text-info">' +
+              data[x].name +
+              ": </strong>" +
+              data[x].message +
+              '<i class="text-muted">' +
+              data[x].time +
+              ' <a id="a' +
+              counter +
+              '" title="' +
+              data[x].name +
+              ": " +
+              data[x].message +
+              "     " +
+              data[x].time +
+              '" href="javascript:"><i class="fas fa-reply"></i></a></i></p> </div> </li>'
+          );
+          counter++;
+        }
+      } else {
+        $lmore.hide();
+      }
+    });
+
+    setInterval(function () {
+      let t = moment().tz("Asia/Dhaka").format("a h:mm");
+      socket.emit("hajira", { user: $user, time: t });
+      console.log("response called");
+    }, 18000);
+
+    // Jump to Last msg funtionality
+    var jump_to_button = $("#jump-to-last");
+    $chat1.scroll(function () {
+      if ($chat1.scrollTop() == 0) {
+        $lmore.fadeIn(200);
+      } else {
+        $lmore.fadeOut(200);
+      }
+
+      var msgwind_height = $(this).height();
+      var msg_position =
+        $(this).get(0).scrollHeight -
+        $(this).scrollTop(); /* Arbitrary calculation */
+      var scroll_distance = msg_position - msgwind_height;
+      var lastmsg_height = $(this).find("li:last-child").height();
+      if (scroll_distance >= lastmsg_height) {
+        jump_to_button.fadeIn(200); // Fade in the arrow
+      } else {
+        jump_to_button.fadeOut(200); // Else fade out the arrow
+      }
+    });
+    jump_to_button.click(function () {
+      // When arrow is clicked
+      $chat1.animate(
+        {
+          scrollTop: $chat.get(0).scrollHeight, // Scroll to last msg
+        },
+        500
+      );
+    });
+
+    // load more onclick
+    $lmore.click(function () {
+      // load more message emit
+      var msgnow = $chat.children().length;
+      socket.emit("loadmore", msgnow);
+    });
+
+    $chat.on("click", "a[id^='a']", function () {
+      var $text_to_reply = $(this).attr("title").replace(/<br>/g, "\n");
+      if ($text_to_reply.length > 200) {
+        $text_to_reply =
+          $text_to_reply.slice(0, 100) +
+          "     ...............     " +
+          $text_to_reply.slice(
+            $text_to_reply.length - 100,
+            $text_to_reply.length
+          );
+      }
+      $text_to_reply = $text_to_reply + "   ===>   ";
+      $message.val($text_to_reply);
+      $message.focus();
+    });
+
+    $chat.on("click", "a[id^='b']", function () {
+      var result = confirm("Want to delete?");
+      if (result) {
+        var message_id = $(this).attr("message_id");
+        socket.emit("delete message", {
+          message_id: message_id,
+          username: $user,
+        });
+      }
+    });
+  });
+</script>
